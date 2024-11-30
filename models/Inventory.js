@@ -2,28 +2,12 @@ const mongoose = require('mongoose')
 
 // Product Schema
 const productSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-    },
-    description: {
-        type: String,
-        required: true,
-    },
-    image: {
-        type: String,
-        required: true,
-    },
-    price: {
-        type: Number,
-        required: true,
-        min: 0,
-    },
-    quantity: {
-        type: Number,
-        required: true,
-        min: 0,
-    },
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    image: { type: String, required: true },
+    price: { type: Number, required: true, min: 0 },
+    quantity: { type: Number, required: true, min: 0 },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
 })
 
 // Category Schema
@@ -33,33 +17,16 @@ const categorySchema = new mongoose.Schema({
         required: true,
         enum: ['food', 'toys', 'treats', 'wellness', 'supplies'],
     },
-    products: {
-        type: [productSchema],
-        required: true,
-    },
+    petTypeId: { type: mongoose.Schema.Types.ObjectId, ref: 'PetType', required: true },
 })
 
 // Pet Type Schema
 const petTypeSchema = new mongoose.Schema({
-    petTypeName: {
-        type: String,
-        required: true,
-        enum: ['dog', 'cat'],
-    },
-    categories: {
-        type: [categorySchema],
-        required: true,
-    },
+    petTypeName: { type: String, required: true, enum: ['dog', 'cat'] },
 })
 
-// Main Schema
-const inventorySchema = new mongoose.Schema({
-    petTypes: {
-        type: [petTypeSchema],
-        required: true,
-    },
-})
+const PetType = mongoose.model('PetType', petTypeSchema)
+const Category = mongoose.model('Category', categorySchema)
+const Product = mongoose.model('Product', productSchema)
 
-const Inventory = mongoose.model('Inventory', inventorySchema)
-
-module.exports = Inventory
+module.exports = { PetType, Category, Product }

@@ -1,171 +1,144 @@
 const express = require('express')
 const router = express.Router()
-const Inventory = require('../models/Inventory')
+const { Product, Category, PetType } = require('../models/Inventory')
+const { isDefined } = require('../helperFunctions')
 
-// import helper functions
-const { isDefined, isNull } = require('../helperFunctions')
+// MIDDLEWARE: Resolve petTypeName and categoryName to ObjectIds
+async function resolveCategory(req, res, next) {
+    const { categoryName, petTypeName } = req.body
 
-// middleware: get one item (used for GET one and PATCH one)
-async function getInventoryItem(req, res, next) {
-    const { params } = req
-    const { id } = params
-    let inventoryItem
+    if (!categoryName || !petTypeName) {
+        return res.status(400).json({ message: 'Missing required categoryName or petTypeName' })
+    }
 
     try {
-        // Find the Inventory document that contains the product
-        inventoryItem = await Inventory.findOne({
-            'petTypes.categories.products._id': id,
-        })
-
-        if (!isDefined(inventoryItem)) {
-            return res.status(404).json({ message: 'Product not found' })
+        // find the pet type
+        const petType = await PetType.findOne({ petTypeName })
+        if (!petType) {
+            return res.status(404).json({ message: `Pet type '${petTypeName}' not found` })
         }
 
-        // Traverse the nested structure to find the specific product
-        let foundProduct = null
-        inventoryItem.petTypes.forEach((petType) => {
-            petType.categories.forEach((category) => {
-                const product = category.products.find((prod) => prod._id.toString() === id)
-                if (product) {
-                    foundProduct = product
-                }
-            })
-        })
-
-        if (!foundProduct) {
-            return res.status(404).json({ message: 'Product not found in nested structure' })
+        // find the category under this pet type
+        const category = await Category.findOne({ categoryName, petTypeId: petType._id })
+        if (!category) {
+            return res
+                .status(404)
+                .json({ message: `Category '${categoryName}' not found under pet type '${petTypeName}'` })
         }
 
-        res.inventoryItem = foundProduct // Attach the product to the response
+        res.category = category
         next()
     } catch (err) {
-        return res.status(500).json({ message: err.message })
+        res.status(500).json({ message: err.message })
     }
 }
 
-// GET all
+// get all products
 router.get('/', async (req, res) => {
     try {
-        const inventory = await Inventory.find()
-        res.send(inventory)
+        const products = await Product.find().populate('categoryId')
+        res.json(products)
     } catch (err) {
         res.status(500).json({ message: err.message })
     }
 })
 
-// GET one
-router.get('/:id', getInventoryItem, (req, res) => {
-    res.status(200).json(res.inventoryItem)
-})
-
-// POST one
-router.post('/', async (req, res) => {
-    const { body } = req
-    const { petTypeName, categoryName, product } = body
-
-    // request validation
-    if (!petTypeName || !categoryName || !product) {
-        return res.status(400).json({
-            message: 'Missing required fields: petTypeName, categoryName, or product.',
-        })
-    }
+// get all products by petType (grouped by category)
+router.get('/grouped/:petTypeName', async (req, res) => {
+    const { petTypeName } = req.params
 
     try {
-        // check if an Inventory document exists
-        let inventoryItem = await Inventory.findOne()
-
-        if (!inventoryItem) {
-            // create a new Inventory document from scratch and add item
-            inventoryItem = new Inventory({
-                petTypes: [
-                    {
-                        petTypeName,
-                        categories: [
-                            {
-                                categoryName,
-                                products: [product],
-                            },
-                        ],
-                    },
-                ],
-            })
-        } else {
-            // find the petType
-            let petType = inventoryItem.petTypes.find((petType) => petType.petTypeName === petTypeName)
-
-            if (!petType) {
-                // if petType does not exist, add it
-                petType = {
-                    petTypeName,
-                    categories: [
-                        {
-                            categoryName,
-                            products: [product],
-                        },
-                    ],
-                }
-                inventoryItem.petTypes.push(petType)
-            } else {
-                // find the category
-                let category = petType.categories.find((cat) => cat.categoryName === categoryName)
-
-                if (!category) {
-                    // if category does not exist, add it
-                    category = {
-                        categoryName,
-                        products: [product],
-                    }
-                    petType.categories.push(category)
-                } else {
-                    // add the product to the category
-                    category.products.push(product)
-                }
-            }
+        // find the petType by name
+        const petType = await PetType.findOne({ petTypeName })
+        if (!petType) {
+            return res.status(404).json({ message: `Pet type '${petTypeName}' not found` })
         }
 
-        // save the updated Inventory document
-        const updatedInventory = await inventoryItem.save()
-        res.status(201).json({
-            message: 'Product added successfully!',
-            updatedInventory,
-        })
+        // perform aggregation to group products by category
+        const results = await Category.aggregate([
+            { $match: { petTypeId: petType._id } }, // match categories for petType
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_id',
+                    foreignField: 'categoryId',
+                    as: 'products',
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    categoryName: 1,
+                    products: 1,
+                },
+            },
+        ])
+
+        res.json(results)
     } catch (err) {
         res.status(500).json({ message: err.message })
     }
 })
 
-// update (PATCH) one
-router.patch('/:id', getInventoryItem, async (req, res) => {
-    const { body } = req
-    const { petTypeName, categoryName, product } = body
-
-    // update petTypeName
-    if (!isDefined(petTypeName)) {
-        let inventoryItem = res.inventoryItem.petTypes[0]
-        inventoryItem.petTypeName = petTypeName
-    }
-
-    // update categoryName
-    if (!isDefined(categoryName)) {
-        res.inventoryItem.petTypes[0].categories[0].categoryName = categoryName
-    }
-
-    // update product
-    // if (!isNull(product)) {
-    //     const { name, description, image, price, quantity } = product
-
-    //     if (!isNull(name)) res.inventoryItem.name = name
-    //     if (!isNull(description)) res.inventoryItem.description = description
-    //     if (!isNull(image)) res.inventoryItem.image = image
-    //     if (!isNull(price)) res.inventoryItem.price = price
-    //     if (!isNull(quantity)) res.inventoryItem.quantity = quantity
-    // }
+// get one product
+router.get('/:id', async (req, res) => {
+    const { id } = req.params
 
     try {
-        const updatedInventoryItem = await res.inventoryItem.save()
-        res.json(updatedInventoryItem)
+        const product = await Product.findById(id).populate('categoryId')
+        if (!product) return res.status(404).json({ message: 'Product not found' })
+
+        res.json(product)
     } catch (err) {
-        res.status(400).json({ message: err.message })
+        res.status(500).json({ message: err.message })
+    }
+})
+
+// add a product
+router.post('/', resolveCategory, async (req, res) => {
+    const { name, description, image, price, quantity } = req.body
+
+    if (!name || !description || !image || price === undefined || quantity === undefined) {
+        return res.status(400).json({ message: 'Missing required product fields' })
+    }
+
+    try {
+        const newProduct = new Product({
+            name,
+            description,
+            image,
+            price,
+            quantity,
+            categoryId: res.category._id,
+        })
+
+        const savedProduct = await newProduct.save()
+        res.status(201).json({ message: 'Product created successfully', product: savedProduct })
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+})
+
+// update a product
+router.patch('/:id', async (req, res) => {
+    const { id } = req.params
+    const { name, description, image, price, quantity } = req.body
+
+    try {
+        const product = await Product.findById(id)
+        if (!product) return res.status(404).json({ message: 'Product not found' })
+
+        // update applicable fields
+        if (isDefined(name)) product.name = name
+        if (isDefined(description)) product.description = description
+        if (isDefined(image)) product.image = image
+        if (isDefined(price)) product.price = price
+        if (isDefined(quantity)) product.quantity = quantity
+
+        const updatedProduct = await product.save()
+        res.json({ message: 'Product updated successfully', product: updatedProduct })
+    } catch (err) {
+        res.status(500).json({ message: err.message })
     }
 })
 

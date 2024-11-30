@@ -13,8 +13,9 @@ db.once('open', () => console.log('Connected to Product Catalog DB'))
 
 app.use(express.json())
 
-app.use('/', require('./routes/products'))
-app.use('/', require('./routes/products'))
+app.use('/products', require('./routes/products'))
+app.use('/categories', require('./routes/categories'))
+app.use('/pet-types', require('./routes/petTypes'))
 
 app.listen(PORT, () => {
     console.log(`CORS-enabled Product Catalog API listening on port ${PORT}...`)

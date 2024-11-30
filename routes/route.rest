@@ -1,60 +1,44 @@
-GET http://localhost:9000/
+### Get all products
+GET http://localhost:9000/products
 
-####
-GET http://localhost:9000/6747cc66a379f77f2d614d2c
+### Get one product
+GET http://localhost:9000/products/PRODUCT_ID
 
-###
-POST http://localhost:9000/
+### Add a product
+POST http://localhost:9000/products
 Content-Type: application/json
 
 {
-    "petTypeName": "dog",
-    "categoryName": "toys",
-    "product": {
-        "name": "Chew Toy",
-        "description": "A durable chew toy for dogs.",
-        "image": "https://example.com/chew-toy.jpg",
-        "price": 12.99,
-        "quantity": 50
-    }
-}
-
-###
-POST http://localhost:9000/
-Content-Type: application/json
-
-{
-    "petTypeName": "cat",
+    "name": "Hill's Science Diet Adult Sensitive Stomach & Skin Chicken Recipe Dry Dog Food, 36 lbs.",
+    "description": "Hill's Science Diet Sensitive Stomach & Skin dry dog food is highly digestible for optimal nutrient absorption & easy stool pick-up. Gentle on stomachs while nourishing skin & promoting a lustrous coat. With beet pulp, a nourishing prebiotic fiber Highly digestible food that is gentle on the stomach Vitamin E & Omega-6 fatty acids for skin & coat nourishment Natural ingredients with added vitamins, minerals and amino acids.",
+    "image": "hills_sensitive.avif",
+    "price": 98.99,
+    "quantity": 50,
     "categoryName": "food",
-    "product": {
-        "name": "Meow Mix",
-        "description": "A quality cat food.",
-        "image": "https://example.com/meow-mix.jpg",
-        "price": 8.99,
-        "quantity": 10
-    }
-}
-
-###
-POST http://localhost:9000/
-Content-Type: application/json
-
-{
-    "petTypeName": "dog",
-    "categoryName": "food",
-    "product": {
-        "name": "Gravy Train",
-        "description": "Just add hot water to make a gravy-licous dog food.",
-        "image": "https://example.com/gravy-train.jpg",
-        "price": 13.99,
-        "quantity": 22
-    }
-}
-
-###
-PATCH http://localhost:9000/6747cc66a379f77f2d614d2c
-Content-Type: application/json
-
-{
     "petTypeName": "dog"
+}
+
+### Update a product
+PATCH http://localhost:9000/products/PRODUCT_ID
+Content-Type: application/json
+
+{
+    "name": "Updated Toy Name"
+}
+
+### Add a category
+POST http://localhost:9000/categories
+Content-Type: application/json
+
+{
+    "categoryName": "supplies",
+    "petTypeName": "cat"
+}
+
+### Add a pet type
+POST http://localhost:9000/pet-types
+Content-Type: application/json
+
+{
+    "petTypeName": "cat"
 }

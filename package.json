@@ -1,0 +1,19 @@
+{
+    "name": "product-catalog-api",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+        "start": "nodemon server.js"
+    },
+    "author": "Jason Conover",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.21.1",
+        "mongoose": "^8.8.2"
+    },
+    "devDependencies": {
+        "dotenv": "^16.4.5",
+        "nodemon": "^3.1.7"
+    }
+}

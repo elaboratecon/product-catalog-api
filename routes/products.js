@@ -54,7 +54,7 @@ router.get('/by-pet-type/:petTypeName', async (req, res) => {
             return res.status(404).json({ message: `Pet type '${petTypeName}' not found` })
         }
 
-        // perform aggregation to group products by category
+        // perform aggregation to group products by category and filter out empty categories
         const results = await Category.aggregate([
             { $match: { petTypeId: petType._id } }, // match categories for petType
             {
@@ -63,6 +63,11 @@ router.get('/by-pet-type/:petTypeName', async (req, res) => {
                     localField: '_id',
                     foreignField: 'categoryId',
                     as: 'products',
+                },
+            },
+            {
+                $match: {
+                    products: { $ne: [] }, // exclude categories with no products
                 },
             },
             {

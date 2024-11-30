@@ -1,4 +1,5 @@
 const express = require('express')
+const cors = require('cors')
 const mongoose = require('mongoose')
 require('dotenv').config()
 
@@ -11,6 +12,7 @@ const db = mongoose.connection
 db.on('error', (error) => console.log(error))
 db.once('open', () => console.log('Connected to Product Catalog DB'))
 
+app.use(cors())
 app.use(express.json())
 
 app.use('/products', require('./routes/products'))

@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
 })
 
 // get all products by petType (grouped by category)
-router.get('/grouped/:petTypeName', async (req, res) => {
+router.get('/by-pet-type/:petTypeName', async (req, res) => {
     const { petTypeName } = req.params
 
     try {
@@ -98,7 +98,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', resolveCategory, async (req, res) => {
     const { name, description, image, price, quantity } = req.body
 
-    if (!name || !description || !image || price === undefined || quantity === undefined) {
+    if (!isDefined(name || description || image || price || quantity)) {
         return res.status(400).json({ message: 'Missing required product fields' })
     }
 

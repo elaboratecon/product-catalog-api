@@ -1,8 +1,11 @@
 ### Get all products
 GET http://localhost:9000/products
 
+### Get products by category
+GET http://localhost:9000/products/by-pet-type/dog
+
 ### Get one product
-GET http://localhost:9000/products/PRODUCT_ID
+GET http://localhost:9000/products/674b7bd11e1d787c26b74962
 
 ### Add a product
 POST http://localhost:9000/products
@@ -18,15 +21,28 @@ Content-Type: application/json
     "petTypeName": "dog"
 }
 
-### Update a product
-PATCH http://localhost:9000/products/PRODUCT_ID
+### Add a product (incomplete data: missing categoryName): SHOULD FAIL
+POST http://localhost:9000/products
 Content-Type: application/json
 
 {
-    "name": "Updated Toy Name"
+    "name": "Nylabone Healthy Edibles Roast Beef Flavored Dog Bone Chews, Small, Count of 2.",
+    "description": "Nylabone Healthy Edibles Roast Beef Flavored Dog Bone Chews. Completely edible and digestible mouth watering flavored chews. Natural, gluten-free, no artificial preservatives, salt or sugar. Includes added vitamins and minerals for a delicious and nutritious treat.",
+    "image": "nylabone_2_pack.avif",
+    "price": 4.99,
+    "quantity": 22,
+    "petTypeName": "dog"
 }
 
-### Add a category
+### Update a product
+PATCH http://localhost:9000/products/674b7bd11e1d787c26b74962
+Content-Type: application/json
+
+{
+    "name": "Nylabone Healthy Edibles Roast Beef Flavored Dog Bone Chews, Small, 2 count"
+}
+
+### Add a category (must pre-populate category before attempting to POST a product of that category)
 POST http://localhost:9000/categories
 Content-Type: application/json
 
@@ -35,7 +51,7 @@ Content-Type: application/json
     "petTypeName": "cat"
 }
 
-### Add a pet type
+### Add a pet type (must pre-populate petType before attempting to POST a product of that petType)
 POST http://localhost:9000/pet-types
 Content-Type: application/json
 

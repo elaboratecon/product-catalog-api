@@ -1,11 +1,14 @@
-### Get all products
+### GET all products
 GET http://localhost:9000/products
 
-### Get products by category
+### GET multiple products by IDs
+GET http://localhost:9000/products/multiple?productIds=674b6e78e4e90ed833853c02,674b7bd11e1d787c26b74962
+
+### GET products by category
 GET http://localhost:9000/products/by-pet-type/dog
 
-### Get one product
-GET http://localhost:9000/products/674b7bd11e1d787c26b74962
+### GET one product
+GET http://localhost:9000/products/674b6e78e4e90ed833853c02
 
 ### Add a product
 POST http://localhost:9000/products

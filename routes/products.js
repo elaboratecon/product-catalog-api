@@ -43,6 +43,30 @@ router.get('/', async (req, res) => {
     }
 })
 
+// get multiple products by IDs
+router.get('/multiple', async (req, res) => {
+    const { productIds } = req.query
+
+    if (!productIds || productIds.length === 0) {
+        return res.status(400).json({ message: 'Invalid or empty productIds array' })
+    }
+
+    try {
+        // split comma-delimited params and place into an array
+        const ids = Array.isArray(productIds) ? productIds : productIds.split(',')
+
+        // get products
+        const products = await Product.find({ _id: { $in: ids } }).populate({
+            path: 'categoryId',
+            populate: { path: 'petTypeId' },
+        })
+
+        res.json(products)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+})
+
 // get all products by petType (grouped by category)
 router.get('/by-pet-type/:petTypeName', async (req, res) => {
     const { petTypeName } = req.params
